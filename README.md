@@ -81,6 +81,7 @@ One service can be ignored:
 	./check_snap_service.py --service nextcloud --ignore nextcloud.nextcloud-fixer
 	OK - service nextcloud is active
 	
+	Ignoring nextcloud.nextcloud-fixer
 	Service                    Startup  Current   Notes
 	nextcloud.apache           enabled  active    -
 	nextcloud.mdns-publisher   enabled  active    -
@@ -98,6 +99,7 @@ Multiple services can be ignored:
 	./check_snap_service.py --service nextcloud --ignore nextcloud.nextcloud-fixer,nextcloud.renew-certs
 	OK - service nextcloud is active
 	
+	Ignoring nextcloud.nextcloud-fixer/nextcloud.renew-certs
 	Service                    Startup  Current   Notes
 	nextcloud.apache           enabled  active    -
 	nextcloud.mdns-publisher   enabled  active    -
