@@ -27,13 +27,14 @@ This Read Me uses the [Nextcloud Snap](https://github.com/nextcloud/nextcloud-sn
 
 ## Usage
 
-    usage: check_snap_service.py [-h] --service SERVICE
+    usage: check_snap_service.py [-h] --service SERVICE [--ignore IGNORE]
 
     Icinga plugin to check snap services
 
     optional arguments:
     -h, --help         show this help message and exit
     --service SERVICE  Check this service(s)
+	--ignore IGNORE    Optional: Ignore this service(s), separated by comma
 
 
 
@@ -51,10 +52,20 @@ The following states can occur:
 
 ### Everything is ok
 
+Checks can be performed on one service only:
+
+    ./check_snap_service.py --service nextcloud.php-fpm
+    OK - service nextcloud.php-fpm is active
+	
+    Service            Startup  Current
+    nextcloud.php-fpm  enabled  active
+
+
 Checks can pe performed on a group of services:
 
     ./check_snap_service.py --service nextcloud
     OK - service nextcloud is active
+	
     Service                   Startup  Current
     nextcloud.apache          enabled  active
     nextcloud.mdns-publisher  enabled  active
@@ -64,12 +75,39 @@ Checks can pe performed on a group of services:
     nextcloud.redis-server    enabled  active
     nextcloud.renew-certs     enabled  active
 
-Checks can pe performed on one service only:
 
-    ./check_snap_service.py --service nextcloud.php-fpm
-    OK - service nextcloud.php-fpm is active
-    Service            Startup  Current
-    nextcloud.php-fpm  enabled  active
+One service can be ignored:
+
+	./check_snap_service.py --service nextcloud --ignore nextcloud.nextcloud-fixer
+	OK - service nextcloud is active
+	
+	Service                    Startup  Current   Notes
+	nextcloud.apache           enabled  active    -
+	nextcloud.mdns-publisher   enabled  active    -
+	nextcloud.mysql            enabled  active    -
+	nextcloud.nextcloud-cron   enabled  active    -
+	nextcloud.nextcloud-fixer  enabled  inactive  -
+	nextcloud.php-fpm          enabled  active    -
+	nextcloud.redis-server     enabled  active    -
+	nextcloud.renew-certs      enabled  active    -
+
+
+
+Multiple services can be ignored:
+
+	./check_snap_service.py --service nextcloud --ignore nextcloud.nextcloud-fixer,nextcloud.renew-certs
+	OK - service nextcloud is active
+	
+	Service                    Startup  Current   Notes
+	nextcloud.apache           enabled  active    -
+	nextcloud.mdns-publisher   enabled  active    -
+	nextcloud.mysql            enabled  active    -
+	nextcloud.nextcloud-cron   enabled  active    -
+	nextcloud.nextcloud-fixer  enabled  inactive  -
+	nextcloud.php-fpm          enabled  active    -
+	nextcloud.redis-server     enabled  active    -
+	nextcloud.renew-certs      enabled  inactive    -
+
 
 ### Something is wrong
 
@@ -77,6 +115,7 @@ Service doesn't exist:
 
     ./check_snap_service.py --service foobar
     UNKNOWN - error while executing
+	
     error: snap "foobar" not found
 
 
@@ -84,6 +123,7 @@ One Snap service is inactive:
 
     ./check_snap_service.py --service nextcloud
     CRITICAL - service nextcloud.apache is not active
+	
     Service                   Startup  Current
     nextcloud.apache          enabled  inactive
     nextcloud.mdns-publisher  enabled  active
@@ -98,6 +138,7 @@ Two Snap services are inactive:
 
     ./check_snap_service.py --service nextcloud
     CRITICAL - multiple services are not active
+	
     Service                   Startup  Current
     nextcloud.apache          enabled  inactive
     nextcloud.mdns-publisher  enabled  active
@@ -122,6 +163,9 @@ In this part you can find configuration examples for Icinga 2.
             value = "$service$"
             required = true
             }
+			"--ignore" = {
+			  value = "$ignoring$"
+			}
         }
     }
 
@@ -145,6 +189,7 @@ All nextcloud services in one check:
 
         vars.snapservice["snap nextcloud"] = {
             service = "nextcloud"
+			ignoring = "nextcloud.nextcloud-fixer"
         }
     }
 

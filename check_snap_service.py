@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-""" 
-    Icinga plugin to check snap services 
+"""
+    Icinga plugin to check snap services
 
-    Version 1.0
+    Version 1.1
 
     Copyright 2018 Florian Köttner
 
@@ -27,8 +27,11 @@ import subprocess
 import sys
 
 class Snap_service:
-    def __init__(self, servicename):
-        self.servicename = servicename
+    def __init__(self, args):
+        self.servicename = args.service
+        self.ignore = None
+        if args.ignore:
+            self.ignore = args.ignore.split(',')
 
     def check(self):
         exitcode = 0
@@ -54,20 +57,25 @@ class Snap_service:
             for line in stdout.splitlines()[1:]:
                 linevalues = line.split()
                 if linevalues[2] != 'active':
-                    if exitcode == 0:
-                        # something is wrong
-                        exitheader = 'CRITICAL - service {0} is not active'.format(linevalues[0])
-                        exitcode = 2
+                    if self.ignore is None or linevalues[0] not in self.ignore:
+                        # check service if it is not ignored
+                        if exitcode == 0:
+                            # something is wrong
+                            exitheader = 'CRITICAL - service {0} is not active'.format(linevalues[0])
+                            exitcode = 2
+                        else:
+                            # multiple things are wrong
+                            exitheader = 'CRITICAL - multiple services are not active'
                     else:
-                        # multiple things are wrong
-                        exitheader = 'CRITICAL - multiple services are not active'
+                        exitbody += 'Ignoring {0}\n'.format('/'.join(self.ignore))
 
             # everything ok
             if exitcode == 0:
                 exitheader = 'OK - service {0} is active'.format(self.servicename)
-            exitbody = stdout
+            exitbody += stdout
 
         print(exitheader)
+        print('')
         print(exitbody)
         return exitcode
 
@@ -80,9 +88,13 @@ def main():
         required=True,
         help='Check this service(s)',
     )
+    argp.add_argument(
+        '--ignore',
+        help='Optional: Ignore this service(s), separated by comma',
+    )
     args = argp.parse_args()
 
-    checker = Snap_service(servicename=args.service)
+    checker = Snap_service(args=args)
     exitcode = checker.check()
     sys.exit(exitcode)
 
